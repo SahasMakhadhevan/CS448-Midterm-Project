@@ -79,4 +79,5 @@ def predict_tag(evaluate=False):
         f.write("\n")
     print(f"POS tagging completed! Results saved to {output_filename}")
 
+
 predict_tag()
