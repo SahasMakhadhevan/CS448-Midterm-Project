@@ -48,11 +48,11 @@ def train_model():
     ])
 
     # https://youtu.be/l2I8NycJMCY?si=_Wp4T-JWuZhxWtQp
-    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2)
+    x_train, x_dev, y_train, y_dev = train_test_split(x_train, y_train, test_size=0.2)
     model.fit(x_train, y_train)
 
     # Evaluate model
-    accuracy = model.score(x_test, y_test)
+    accuracy = model.score(x_dev, y_dev)
     print("Accuracy of dev set using SVM: ", accuracy)
     return model
 
