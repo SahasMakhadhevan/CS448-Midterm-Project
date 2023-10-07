@@ -1,46 +1,49 @@
 import torch
+from sklearn.feature_extraction import DictVectorizer
 from torch import nn
-#import numpy as np
+# import numpy as np
 from collections import Counter
 from torch.utils.data import DataLoader, TensorDataset
-#from sklearn import datasets
-#from sklearn.preprocessing import StandardScaler    
+# from sklearn import datasets
+# from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
-output_filename = 'Logistic_Regression.txt'
-input_filename = 'unlabeled_test_test.txt'
+training_data = 'data/train.txt'
+output_filename = 'data/lr_output.txt'
+input_filename = 'data/unlabeled_test_test.txt'
 
-def get_features(index, sentence):
-    return {
-        'word': sentence[index],
-        'prev_word': '' if index == 0 else sentence[index - 1],
-        'next_word': '' if index == len(sentence) - 1 else sentence[index + 1],
-        'bool_first_letter_capital': sentence[index] == (sentence[index].title()),
-        'bool_first_word': index == 0,
-        'bool_last': index == len(sentence) - 1,
-        'bool_numeric': sentence[index].isdigit()
-    }
+
+# def get_features(index, sentence):
+#     return {
+#         'word': sentence[index],
+#         'prev_word': '' if index == 0 else sentence[index - 1],
+#         'next_word': '' if index == len(sentence) - 1 else sentence[index + 1],
+#         'bool_first_letter_capital': sentence[index] == (sentence[index].title()),
+#         'bool_first_word': index == 0,
+#         'bool_last': index == len(sentence) - 1,
+#         'bool_numeric': sentence[index].isdigit()
+#     }
+
 
 # Load training data
-train_data = []
-with open('train.txt', 'r') as file:
-    sentence_tokens = []
-    for line in file:
-        line = line.strip()
-        if line:
-            token, pos_tag, _ = line.split()
-            sentence_tokens.append((token, pos_tag))
-        else:
-            train_data.append(sentence_tokens)
-            sentence_tokens = []
+# train_data = []
+# with open(training_data, 'r') as file:
+#     sentence_tokens = []
+#     for line in file:
+#         line = line.strip()
+#         if line:
+#             token, pos_tag, _ = line.split()
+#             sentence_tokens.append((token, pos_tag))
+#         else:
+#             train_data.append(sentence_tokens)
+#             sentence_tokens = []
 
-#def get_features(index, sentence):
+# def get_features(index, sentence):
 
-#sentences = ["The cat sat on the mat.", "I like to play soccer."]
-#pos_tags = ["DT NN VBD IN DT NN", "PRP VBP TO VB NN."]
+sentences = ["The cat sat on the mat.", "I like to play soccer."]
+pos_tags = ["DT NN VBD IN DT NN", "PRP VBP TO VB NN."]
 
-"""
 word_counter = Counter()
 for sentence in sentences:
     word_counter.update(sentence.split())
@@ -49,13 +52,13 @@ vocab = {word: idx for idx, (word, _) in enumerate(word_counter.items())}
 X = [[vocab[word] for word in sentence.split()] for sentence in sentences]
 encoder = LabelEncoder()
 y = encoder.fit_transform(pos_tags)
-"""
+
 
 # Extract features
-x_train = [[get_features(index, sentence) for index in range(len(sentence))] for sentence in
-            [list(zip(*sentence))[0] for sentence in train_data]]
-x_train = [word for sentence in x_train for word in sentence]
-y_train = [word[1] for sentence in train_data for word in sentence]
+# x_train = [[get_features(index, sentence) for index in range(len(sentence))] for sentence in
+#            [list(zip(*sentence))[0] for sentence in train_data]]
+# x_train = [word for sentence in x_train for word in sentence]
+# y_train = [word[1] for sentence in train_data for word in sentence]
 
 """
 bc = datasets.load_breast_cancer()
@@ -65,7 +68,7 @@ n_samples, n_features = x.shape
 print(n_samples, n_features)
 """
 
-X_train, X_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 """
 #scale
@@ -81,18 +84,24 @@ y_test = torch.from_numpy(y_test.astype(np.float32))
 y_train = y_train.view(y_train.shape[0], 1)
 y_test = y_test.view(y_test.shape[0], 1)
 """
+# vectorizer = DictVectorizer(sparse=True)
+# X_train = vectorizer.fit_transform(X_train)
+# X_test = vectorizer.fit_transform(X_test)
+#
+# encoder = LabelEncoder()
+# y_train = encoder.fit_transform(y_train)
+# y_test = encoder.fit_transform(y_test)
 
-X_train = torch.tensor(X_train, dtype=torch.long)
-y_train = torch.tensor(y_train, dtype=torch.long)
-X_test = torch.tensor(X_test, dtype=torch.long)
-y_test = torch.tensor(y_test, dtype=torch.long)
+# Convert to tensors
+X_train = torch.tensor(X_train, dtype=torch.float32)
+y_train = torch.tensor(y_train, dtype=torch.float32)
+X_test = torch.tensor(X_test, dtype=torch.float32)
+y_test = torch.tensor(y_test, dtype=torch.float32)
 
 train_data = TensorDataset(X_train, y_train)
-train_loader = DataLoader(train_data, batch_size = 32, shuffle=True)
+train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
 
-
-
-#Model
+# Model
 
 """
 #f = wx + b, sigmoid at the end
@@ -106,6 +115,7 @@ class LogisticRegression(nn.module):
         return y_predicted
 """
 
+
 class LogisticRegression(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(LogisticRegression, self).__init__()
@@ -113,14 +123,15 @@ class LogisticRegression(nn.Module):
 
     def forward(self, x):
         return self.linear(x)
-    
-input_dim = len(x_train)
-output_dim = len(y_train)
+
+
+input_dim = len(vocab)
+output_dim = len(encoder.classes_)
 model = LogisticRegression(input_dim, output_dim)
 
-#model = LogisticRegression(n_features)
+# model = LogisticRegression(n_features)
 
-#Loss and Optimizer
+# Loss and Optimizer
 lr = 0.01
 criterion = nn.BCELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr)
@@ -139,7 +150,7 @@ with torch.no_grad():
     y_pred = model(X_test)
     _, predicted = torch.max(y_pred, 1)
 
-accuracy = (predicted == y_test).sum().item()/y_test.size(0)
+accuracy = (predicted == y_test).sum().item() / y_test.size(0)
 print(f"Accuracy: {accuracy}")
 
 """
